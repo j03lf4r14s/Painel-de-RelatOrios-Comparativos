@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel de Relatórios Comparativos</title>
+<style>
+:root{--bg:#101216;--panel:#191d24;--panel2:#202630;--line:#303946;--text:#f3f5f7;--muted:#aab3bf;--red:#e5484d;--green:#36b37e;--yellow:#e6b450;--blue:#5b9cf6}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 Arial,Helvetica,sans-serif}
+header{padding:26px 22px;background:linear-gradient(120deg,#211c21,#171b22);border-bottom:1px solid var(--line)}
+.wrap{max-width:1400px;margin:auto;padding:0 18px}
+h1{margin:0 0 5px;font-size:clamp(22px,3vw,32px)}h2{font-size:19px;margin:0 0 15px}h3{font-size:16px;margin:0 0 10px}
+.sub{color:var(--muted);margin:0}.top-actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:17px}
+main{padding:22px 0 50px}.panel{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:18px;margin-bottom:18px;min-width:0}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+label{display:block;color:var(--muted);font-size:12px;margin:0 0 5px}
+input,select{width:100%;min-width:0;background:#10151c;color:var(--text);border:1px solid #3a4553;border-radius:8px;padding:10px;font:inherit}
+input:focus,select:focus{outline:2px solid #a33b42;border-color:var(--red)}
+button,.filebtn{border:1px solid #46515e;background:#252d38;color:var(--text);padding:10px 13px;border-radius:8px;cursor:pointer;font-weight:600;font-size:13px}
+button:hover,.filebtn:hover{filter:brightness(1.15)}button.primary{background:var(--red);border-color:var(--red);color:white}
+button.good{background:#176a4b;border-color:#23865f}button.danger{background:#54272b;border-color:#87373e}button.small{padding:7px 9px;font-size:12px}
+button:disabled{opacity:.45;cursor:not-allowed}
+.periods{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:14px}
+.period-card{background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:14px;min-width:0}
+.period-head{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:12px}
+.period-head strong{font-size:16px;overflow-wrap:anywhere}
+.employee-list{margin-top:12px;border-top:1px solid var(--line);padding-top:10px}
+.employee-row{display:grid;grid-template-columns:minmax(0,1fr) 115px 35px;gap:7px;align-items:end;margin:8px 0}
+.employee-row .remove{height:40px;padding:5px}
+.muted{color:var(--muted)}.hint{font-size:12px;color:var(--muted)}
+.checklist{display:flex;flex-wrap:wrap;gap:9px;margin:10px 0}
+.checkitem{display:flex;align-items:center;gap:7px;background:#111720;border:1px solid var(--line);padding:8px 10px;border-radius:8px;font-size:13px}
+.checkitem input{width:auto}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.kpi{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:13px}
+.kpi .label{color:var(--muted);font-size:12px}.kpi .value{font-size:24px;font-weight:700;margin-top:4px;overflow-wrap:anywhere}
+.table-wrap{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:650px;font-size:13px}th,td{padding:10px 9px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}th{color:#d7dde5;background:#222a35}th:first-child,td:first-child{text-align:left;position:sticky;left:0;background:var(--panel);z-index:2}
+.positive{color:var(--green);font-weight:700}.negative{color:#ff777d;font-weight:700}.neutral{color:var(--muted)}
+.bar-row{display:grid;grid-template-columns:145px minmax(80px,1fr) 75px;gap:10px;align-items:center;margin:10px 0;font-size:13px}
+.bar-track{height:13px;background:#303946;border-radius:20px;overflow:hidden}.bar{height:100%;background:var(--red);border-radius:20px}
+.notice{background:#252b32;border-left:3px solid var(--yellow);padding:11px 13px;color:#d7dde5;border-radius:5px;font-size:12px}
+.hidden{display:none!important}.empty{padding:25px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:10px}
+footer{color:var(--muted);font-size:12px;text-align:center;padding:10px 0 30px}
+
+/* ===== GRÁFICOS DE TAGS (ESTILO IMAGEM) ===== */
+.chart-row{display:grid;grid-template-columns:170px minmax(100px,1fr) 65px;gap:10px;align-items:center;margin:8px 0;font-size:13px}
+.chart-label{text-align:right;font-weight:600;overflow-wrap:anywhere;color:var(--text)}
+.chart-bar-container{background:#1e2530;border-radius:4px;height:22px;overflow:hidden}
+.chart-bar{height:100%;background:#2563eb;border-radius:4px;transition:width .3s ease}
+.chart-value{text-align:left;font-weight:700;color:var(--text)}
+
+/* ===== TABELA ANALÍTICA DE TAGS ===== */
+.tag-table th:first-child,.tag-table td:first-child{min-width:220px}
+.tag-table tbody tr:hover td{background:#222a35}
+.tag-table tbody tr:hover td:first-child{background:#222a35}
+.tag-table tfoot th{background:#2a333f;font-weight:700}
+.tag-table .share-cell{color:var(--muted);font-size:11px}
+
+@media(max-width:800px){.grid,.grid3{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.employee-row{grid-template-columns:minmax(0,1fr) 95px 35px}.chart-row{grid-template-columns:120px 1fr 60px}}
+@media print{
+ body{background:#fff;color:#111;font-size:11px}header{background:#fff;color:#111;border:0;padding:8px 0}.sub,.muted,.hint,label,footer{color:#444}
+ .wrap{max-width:none;padding:0}.panel,.period-card,.kpi{background:#fff;color:#111;border:1px solid #bbb;break-inside:avoid}
+ .top-actions,.no-print,.periods-editor,.notice.no-print{display:none!important}
+ input,select{background:#fff;color:#111;border:0;padding:0}
+ th,td{color:#111;border-color:#ccc}th{background:#eee}th:first-child,td:first-child{background:#fff}
+ .bar-track{background:#eee}.bar{print-color-adjust:exact;-webkit-print-color-adjust:exact}
+ .chart-bar-container{background:#eee}.chart-bar{print-color-adjust:exact;-webkit-print-color-adjust:exact}
+ .tag-table tbody tr:hover td{background:#fff}
+}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+<h1>Painel de Relatórios Comparativos</h1>
+<p class="sub">Cadastre períodos, edite colaboradores e tags, e compare quantos meses quiser.</p>
+<div class="top-actions no-print">
+<button type="button" class="primary" id="addPeriodBtn">＋ Adicionar período</button>
+<button type="button" id="backupBtn">Exportar backup</button>
+<label class="filebtn" style="margin:0">Importar backup<input id="importFile" type="file" accept=".json,application/json" hidden></label>
+<button type="button" id="printBtn">Imprimir / Salvar PDF</button>
+<button type="button" class="danger" id="clearBtn">Limpar todos os dados</button>
+</div>
+</div></header>
+<main class="wrap">
+<section class="panel periods-editor">
+<div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap">
+<div><h2>Cadastro dos períodos</h2><div class="hint">Os dados são salvos automaticamente neste navegador. Use o backup para guardar ou transferir seus dados.</div></div>
+<span class="hint" id="saveStatus">Salvamento automático ativado</span>
+</div>
+<div id="periods" class="periods" style="margin-top:15px"></div>
+</section>
+
+<section class="panel">
+<h2>Configurar comparação</h2>
+<p class="hint">Marque dois ou mais períodos. Escolha um período-base para calcular as diferenças percentuais dos demais.</p>
+<div class="grid">
+<div><label>Período-base</label><select id="basePeriod"></select></div>
+<div><label>Períodos que entrarão no relatório</label><div id="periodChecks" class="checklist"></div></div>
+</div>
+<div class="top-actions no-print">
+<button type="button" class="primary" id="compareBtn">Atualizar relatório</button>
+<button type="button" id="selectAllBtn">Selecionar todos</button>
+<button type="button" id="selectNoneBtn">Limpar seleção</button>
+</div>
+</section>
+
+<section id="report">
+<section class="panel">
+<h2>Resumo geral</h2>
+<div id="kpis" class="kpis"><div class="empty">Cadastre e selecione pelo menos dois períodos.</div></div>
+<div id="summaryText" style="margin-top:14px"></div>
+</section>
+<section class="panel">
+<h2>Comparativo por colaborador</h2>
+<div class="table-wrap" id="comparisonTable"><div class="empty">O comparativo aparecerá aqui.</div></div>
+</section>
+<section class="panel">
+<h2>Volume total por período</h2>
+<div id="totalBars"></div>
+</section>
+<section class="panel">
+<h2>Participação por colaborador e período</h2>
+<div class="table-wrap" id="shareTable"><div class="empty">O detalhamento aparecerá aqui.</div></div>
+</section>
+
+<!-- ===== PAINÉIS DE TAGS ===== -->
+<section class="panel">
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:15px">
+    <h2 style="margin:0">Atendimentos x Tags</h2>
+    <div>
+      <label style="display:inline-block;margin:0 5px 0 0">Período:</label>
+      <select id="tagChartPeriodSelect" style="width:auto;display:inline-block;padding:6px 10px"></select>
+    </div>
+  </div>
+  <p class="hint" id="tagPeriodLabel"></p>
+  <div id="tagBars"></div>
+</section>
+
+<section class="panel">
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:15px">
+    <h2 style="margin:0">% Atendimentos x Tags</h2>
+    <div>
+      <label style="display:inline-block;margin:0 5px 0 0">Período:</label>
+      <select id="tagPctPeriodSelect" style="width:auto;display:inline-block;padding:6px 10px"></select>
+    </div>
+  </div>
+  <p class="hint" id="tagPctPeriodLabel"></p>
+  <div id="tagPctBars"></div>
+</section>
+
+<!-- ===== NOVO: RELATÓRIO ANALÍTICO DE TAGS ===== -->
+<section class="panel">
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:15px">
+    <h2 style="margin:0">📊 Analítico de Tags (todos os períodos)</h2>
+    <div class="no-print">
+      <label style="display:inline-block;margin:0 5px 0 0">Ordenar por:</label>
+      <select id="tagAnalyticSort" style="width:auto;display:inline-block;padding:6px 10px">
+        <option value="base">Volume no período-base</option>
+        <option value="last">Volume no último período</option>
+        <option value="delta">Variação absoluta</option>
+        <option value="pct">Variação percentual</option>
+        <option value="name">Nome (A-Z)</option>
+      </select>
+    </div>
+  </div>
+  <p class="hint">Comparação detalhada de todas as tags por período. A última coluna mostra a variação entre o último período selecionado e o período-base.</p>
+  <div class="table-wrap" id="tagAnalyticTable"><div class="empty">Selecione pelo menos dois períodos para gerar o analítico.</div></div>
+  <div id="tagAnalyticSummary" style="margin-top:15px"></div>
+</section>
+
+<section class="panel">
+<h2>Análise automática</h2>
+<div id="analysis"><div class="empty">A análise será gerada após selecionar os períodos.</div></div>
+</section>
+</section>
+<div class="notice">Importante: o sistema compara os volumes informados. Uma quantidade maior ou menor, isoladamente, não comprova produtividade ou qualidade; considere também jornada, escala, tipo e complexidade dos atendimentos.</div>
+</main>
+<footer>Painel local • Os dados permanecem no navegador até serem apagados. Exporte backups regularmente.</footer>
+
+<script>
+/* ===== LISTA PADRÃO DE ASSUNTOS (TAGS) — TODOS EM MAIÚSCULO ===== */
+const STANDARD_TAGS = [
+  'TRANSFERÊNCIA',
+  'HABILITAÇÃO DE APLICATIVO',
+  'ABANDONO',
+  'SEM CONEXÃO',
+  'OSCILAÇÃO',
+  'SEM INTERAÇÃO',
+  'CANAIS DE ATENDIMENTO',
+  'CONFIRMAÇÃO DE VISITA TÉCNICA',
+  'TROCA DE SENHA WI-FI',
+  'INFORMAÇÕES GERAIS',
+  'AGENDAMENTO DE VISITA TÉCNICA',
+  'OUTROS PROBLEMAS DE SUPORTE',
+  'SUPORTE TÉCNICO',
+  'CAIXA OFF',
+  'CAIXA ATENUADA',
+  'COMPROVANTE DE PAGAMENTO',
+  'INFORME DE PAGAMENTO',
+  'IDENTIFICAÇÃO DE FALHA MASSIVA',
+  'ATENUAÇÃO',
+  'OUTROS ASSUNTOS',
+  'PROMESSA DE PAGAMENTO',
+  'CANCELAMENTO',
+  '(EM BRANCO)',
+  'CONFIRMAÇÃO DE VISITA',
+  'REAGENDAMENTO',
+  'OUTRAS DÚVIDAS',
+  'AGRADECIMENTO',
+  'FINALIZAÇÃO DE FALHA MASSIVA',
+  'ALTERAÇÃO DA REE WIFI',
+  'DESBLOQUEIO EM CONFIANÇA',
+  'ALTERAÇÃO DE TITULARIDADE',
+  'CAIXA POSTAL',
+  'CANCELAMENTO DE VISITA TÉCNICA',
+  'MUDANÇA DE PONTO INTERNO',
+  'REPETIDOR DE SINAL',
+  'RETIRADA DE EQUIPAMENTO',
+  'TESTE DE VELOCIDADE',
+  'ALTERAÇÃO DE PLANO',
+  'HORÁRIO DE FUNCIONAMENTO',
+  'INFORMAÇÕES',
+  'MENSAGENS ALEATÓRIAS ALHEIAS A OPERAÇÃO',
+  'RENEGOCIAÇÃO',
+  'REPARO DE VOIP',
+  'SUPORTE IPTV',
+  'TICKET DE CHIP'
+];
+
+const STORAGE_KEY='painel_relatorios_comparativos_v1';
+let periods=[];
+let selectedIds=[];
+let baseId='';
+const $=id=>document.getElementById(id);
+const uid=()=> 'p_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7);
+const num=v=>Math.max(0,Math.floor(Number(v)||0));
+const fmt=n=>Number(n||0).toLocaleString('pt-BR');
+const pct=(a,b)=>b===0?(a===0?0:null):(a-b)/b*100;
+const signed=n=>(n>0?'+':'')+fmt(n);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* ===== CONVERSÃO MÊS/ANO ===== */
+const MESES_PT=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+function monthToName(monthValue){
+  if(!monthValue||typeof monthValue!=='string')return '';
+  const m=monthValue.match(/^(\d{4})-(\d{2})$/);
+  if(!m)return '';
+  const ano=m[1];
+  const mesIdx=parseInt(m[2],10)-1;
+  if(mesIdx<0||mesIdx>11)return '';
+  return MESES_PT[mesIdx]+'/'+ano;
+}
+function nameToMonth(name){
+  if(!name||typeof name!=='string')return '';
+  const parts=name.trim().split('/');
+  if(parts.length!==2)return '';
+  const idx=MESES_PT.findIndex(x=>x.toLowerCase()===parts[0].trim().toLowerCase());
+  if(idx<0)return '';
+  const ano=parts[1].trim();
+  if(!/^\d{4}$/.test(ano))return '';
+  return ano+'-'+String(idx+1).padStart(2,'0');
+}
+function normalizePeriod(p){
+  if(!p.tags)p.tags=[];
+  p.tags.forEach(t=>{ if(t.name) t.name = t.name.toUpperCase(); });
+  if(p.month&&monthToName(p.month)){p.name=monthToName(p.month);return;}
+  const conv=nameToMonth(p.name);
+  if(conv){p.month=conv;p.name=monthToName(conv);}
+}
+
+function sample(){
+ const p1={id:uid(),month:'2026-08',name:'Agosto/2026',start:'2026-08-01',end:'2026-08-30',
+   people:[['Gabriel',774],['Jaynnara',833],['Renato',438],['Hayanna',507]].map(([name,count])=>({id:uid(),name,count})),
+   tags:STANDARD_TAGS.slice(0,10).map((name,i)=>({id:uid(),name:name,count:[542,415,396,369,253,154,152,138,93,87][i]}))
+ };
+ const p2={id:uid(),month:'2026-09',name:'Setembro/2026',start:'2026-09-01',end:'2026-09-30',
+   people:[['Gabriel',759],['Jaynnara',638],['Renato',429],['Hayanna',638]].map(([name,count])=>({id:uid(),name,count})),
+   tags:STANDARD_TAGS.slice(0,10).map((name,i)=>({id:uid(),name:name,count:[600,450,400,380,280,180,170,150,100,90][i]}))
+ };
+ periods=[p1,p2];selectedIds=[p1.id,p2.id];baseId=p1.id;
+}
+function save(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify({periods,selectedIds,baseId}));$('saveStatus').textContent='Salvo automaticamente às '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});}catch(e){$('saveStatus').textContent='Não foi possível salvar neste navegador.';}}
+function load(){
+  try{
+    const d=JSON.parse(localStorage.getItem(STORAGE_KEY));
+    if(d&&Array.isArray(d.periods)){
+      periods=d.periods;
+      periods.forEach(normalizePeriod);
+      selectedIds=d.selectedIds||[];
+      baseId=d.baseId||'';
+      return;
+    }
+  }catch(e){}
+  sample();save();
+}
+function total(p){return p.people.reduce((s,x)=>s+num(x.count),0);}
+function totalTags(p){return (p.tags||[]).reduce((s,x)=>s+num(x.count),0);}
+
+function renderPeriods(){
+ const root=$('periods');root.innerHTML='';
+ if(!periods.length){root.innerHTML='<div class="empty">Nenhum período cadastrado. Clique em “Adicionar período”.</div>';return;}
+ periods.forEach(p=>{
+  const card=document.createElement('div');card.className='period-card';
+  card.innerHTML=`<div class="period-head"><strong>${esc(p.name||'Período sem nome')}</strong><button type="button" class="danger small" data-del="${p.id}">Excluir período</button></div>
+  <div class="grid">
+    <div><label>Mês / período</label><input type="month" data-field="month" data-id="${p.id}" value="${esc(p.month||'')}"></div>
+    <div><label>Total de registros</label><input value="${fmt(total(p))}" readonly></div>
+    <div><label>Data inicial</label><input type="date" data-field="start" data-id="${p.id}" value="${esc(p.start||'')}"></div>
+    <div><label>Data final</label><input type="date" data-field="end" data-id="${p.id}" value="${esc(p.end||'')}"></div>
+  </div>
+  <div class="employee-list">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h3>Colaboradores</h3><button type="button" class="small" data-addperson="${p.id}">＋ Colaborador</button></div>
+    <div>${p.people.map(person=>`<div class="employee-row"><div><label>Nome</label><input data-personfield="name" data-period="${p.id}" data-person="${person.id}" value="${esc(person.name)}"></div><div><label>Quantidade</label><input type="number" min="0" step="1" data-personfield="count" data-period="${p.id}" data-person="${person.id}" value="${num(person.count)}"></div><button type="button" class="danger remove" title="Remover colaborador" data-delperson="${p.id}" data-person="${person.id}">×</button></div>`).join('')}</div>
+  </div>
+  <div class="employee-list">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h3>Tags / Categorias</h3><button type="button" class="small" data-addtag="${p.id}">＋ Tag</button></div>
+    <div>${(p.tags||[]).map(tag=>{
+      const opts = [...new Set([...STANDARD_TAGS, tag.name.toUpperCase()])];
+      return `<div class="employee-row">
+        <div>
+          <label>Assunto</label>
+          <select data-tagfield="name" data-period="${p.id}" data-tag="${tag.id}">
+            ${opts.map(opt => `<option value="${opt}" ${tag.name.toUpperCase() === opt ? 'selected' : ''}>${opt}</option>`).join('')}
+            <option value="OUTRO">OUTRO (DIGITAR...)</option>
+          </select>
+        </div>
+        <div>
+          <label>Quantidade</label>
+          <input type="number" min="0" step="1" data-tagfield="count" data-period="${p.id}" data-tag="${tag.id}" value="${num(tag.count)}">
+        </div>
+        <button type="button" class="danger remove" title="Remover tag" data-deltag="${p.id}" data-tag="${tag.id}">×</button>
+      </div>`;
+    }).join('')}</div>
+  </div>`;
+  root.appendChild(card);
+ });
+}
+function renderSelectors(){
+ const base=$('basePeriod');base.innerHTML=periods.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('');
+ if(!periods.some(p=>p.id===baseId))baseId=periods[0]?.id||'';
+ base.value=baseId;
+ $('periodChecks').innerHTML=periods.map(p=>`<label class="checkitem"><input type="checkbox" data-select="${p.id}" ${selectedIds.includes(p.id)?'checked':''}> ${esc(p.name)}</label>`).join('');
+
+ const chosen=periods.filter(p=>selectedIds.includes(p.id));
+ const tagSelect=$('tagChartPeriodSelect');
+ const tagPctSelect=$('tagPctPeriodSelect');
+ const prevTagVal=tagSelect.value;
+ const prevTagPctVal=tagPctSelect.value;
+ tagSelect.innerHTML=chosen.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('');
+ tagPctSelect.innerHTML=chosen.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('');
+ if(chosen.some(p=>p.id===prevTagVal))tagSelect.value=prevTagVal;
+ else if(chosen.length)tagSelect.value=chosen[chosen.length-1].id;
+ if(chosen.some(p=>p.id===prevTagPctVal))tagPctSelect.value=prevTagPctVal;
+ else if(chosen.length)tagPctSelect.value=chosen[chosen.length-1].id;
+}
+
+function renderTagCharts(){
+  const tagSelect=$('tagChartPeriodSelect');
+  const tagPctSelect=$('tagPctPeriodSelect');
+  const p1=periods.find(p=>p.id===tagSelect.value);
+  const p2=periods.find(p=>p.id===tagPctSelect.value);
+
+  const render=(period, containerId, labelId, isPct)=>{
+    const container=$(containerId);
+    const label=$(labelId);
+    if(!period||!period.tags||!period.tags.length){
+      container.innerHTML='<div class="empty">Nenhuma tag cadastrada para este período.</div>';
+      label.textContent='';
+      return;
+    }
+    const total=period.tags.reduce((s,x)=>s+num(x.count),0);
+    const sorted=[...period.tags].sort((a,b)=>num(b.count)-num(a.count));
+    const maxCount=Math.max(1,...sorted.map(x=>num(x.count)));
+    const maxPct=Math.max(1,...sorted.map(x=>total?(num(x.count)/total*100):0));
+
+    let html='';
+    sorted.forEach(tag=>{
+      const val=num(tag.count);
+      const pctVal=total?(val/total*100):0;
+      const width=isPct?(pctVal/maxPct*100):(val/maxCount*100);
+      const displayVal=isPct?pctVal.toFixed(2).replace('.',',')+'%':fmt(val);
+      html+=`<div class="chart-row">
+        <div class="chart-label">${esc(tag.name)}</div>
+        <div class="chart-bar-container"><div class="chart-bar" style="width:${width}%"></div></div>
+        <div class="chart-value">${displayVal}</div>
+      </div>`;
+    });
+    container.innerHTML=html;
+    label.textContent=`Exibindo tags do período: ${period.name}`;
+  };
+
+  render(p1,'tagBars','tagPeriodLabel',false);
+  render(p2,'tagPctBars','tagPctPeriodLabel',true);
+}
+
+/* ===== RELATÓRIO ANALÍTICO DE TAGS ===== */
+function renderTagAnalytic(){
+  const container=$('tagAnalyticTable');
+  const summary=$('tagAnalyticSummary');
+  const chosen=periods.filter(p=>selectedIds.includes(p.id));
+  const base=periods.find(p=>p.id===baseId)||chosen[0];
+
+  if(chosen.length<2||!base||!chosen.includes(base)){
+    container.innerHTML='<div class="empty">Selecione pelo menos dois períodos para gerar o analítico.</div>';
+    summary.innerHTML='';
+    return;
+  }
+
+  const last=chosen[chosen.length-1];
+  const baseTotalTags=totalTags(base);
+  const lastTotalTags=totalTags(last);
+
+  // Agrega todas as tags únicas entre os períodos selecionados
+  const allTagNames=[...new Set(chosen.flatMap(p=>(p.tags||[]).map(t=>t.name.toUpperCase()).filter(Boolean)))];
+
+  // Monta os dados por tag
+  let rows=allTagNames.map(name=>{
+    const values=chosen.map(p=>{
+      const count=(p.tags||[]).filter(t=>t.name.toUpperCase()===name).reduce((s,t)=>s+num(t.count),0);
+      const totalP=p.tags?totalTags(p):0;
+      const pctVal=totalP?(count/totalP*100):0;
+      return {count,pct:pctVal};
+    });
+    const baseVal=values[0].count;
+    const lastVal=values[values.length-1].count;
+    const delta=lastVal-baseVal;
+    const pctChange=pct(lastVal,baseVal);
+    return {name,values,baseVal,lastVal,delta,pctChange};
+  });
+
+  // Ordenação
+  const sortBy=$('tagAnalyticSort').value;
+  if(sortBy==='base') rows.sort((a,b)=>b.baseVal-a.baseVal);
+  else if(sortBy==='last') rows.sort((a,b)=>b.lastVal-a.lastVal);
+  else if(sortBy==='delta') rows.sort((a,b)=>Math.abs(b.delta)-Math.abs(a.delta));
+  else if(sortBy==='pct') rows.sort((a,b)=>{
+    const pa=a.pctChange===null?-Infinity:a.pctChange;
+    const pb=b.pctChange===null?-Infinity:b.pctChange;
+    return Math.abs(pb)-Math.abs(pa);
+  });
+  else if(sortBy==='name') rows.sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
+
+  // Totais por período
+  const totalsByPeriod=chosen.map(p=>totalTags(p));
+  const grandTotal=totalsByPeriod.reduce((a,b)=>a+b,0);
+
+  // Cabeçalho
+  let html='<table class="tag-table"><thead><tr>';
+  html+='<th>Tag / Assunto</th>';
+  chosen.forEach(p=>{
+    html+=`<th>${esc(p.name)}<br><span class="share-cell">Qtd. • %</span></th>`;
+  });
+  html+='<th>Variação último/base</th>';
+  html+='<th>Var. %</th>';
+  html+='</tr></thead><tbody>';
+
+  if(!rows.length){
+    html+='<tr><td colspan="'+(chosen.length+3)+'" style="text-align:center;color:var(--muted);padding:20px">Nenhuma tag cadastrada nos períodos selecionados.</td></tr>';
+  } else {
+    rows.forEach(r=>{
+      html+=`<tr><td><strong>${esc(r.name)}</strong></td>`;
+      r.values.forEach(v=>{
+        html+=`<td>${fmt(v.count)}<br><span class="share-cell">${v.pct.toFixed(1).replace('.',',')}%</span></td>`;
+      });
+      const deltaClass=r.delta>0?'positive':r.delta<0?'negative':'neutral';
+      html+=`<td class="${deltaClass}">${signed(r.delta)}</td>`;
+      const pctClass=r.pctChange>0?'positive':r.pctChange<0?'negative':'neutral';
+      html+=`<td class="${pctClass}">${r.pctChange===null?'—':(r.pctChange>0?'+':'')+r.pctChange.toFixed(1).replace('.',',')+'%'}</td>`;
+      html+='</tr>';
+    });
+  }
+
+  // Rodapé com totais
+  html+='</tbody><tfoot><tr>';
+  html+='<th>TOTAL GERAL</th>';
+  totalsByPeriod.forEach(t=>{
+    const pctVal=grandTotal?(t/grandTotal*100):0;
+    html+=`<th>${fmt(t)}<br><span class="share-cell">${pctVal.toFixed(1).replace('.',',')}%</span></th>`;
+  });
+  const deltaTotal=lastTotalTags-baseTotalTags;
+  const pctTotal=pct(lastTotalTags,baseTotalTags);
+  const deltaClass=deltaTotal>0?'positive':deltaTotal<0?'negative':'neutral';
+  const pctClass=pctTotal>0?'positive':pctTotal<0?'negative':'neutral';
+  html+=`<th class="${deltaClass}">${signed(deltaTotal)}</th>`;
+  html+=`<th class="${pctClass}">${pctTotal===null?'—':(pctTotal>0?'+':'')+pctTotal.toFixed(1).replace('.',',')+'%'}</th>`;
+  html+='</tr></tfoot></table>';
+
+  container.innerHTML=html;
+
+  // Resumo textual abaixo da tabela
+  const aumentaram=rows.filter(r=>r.delta>0).length;
+  const diminuíram=rows.filter(r=>r.delta<0).length;
+  const estáveis=rows.filter(r=>r.delta===0).length;
+
+  // Top 3 maiores crescimentos e top 3 maiores quedas
+  const sortedByGrowth=[...rows].sort((a,b)=>b.delta-a.delta);
+  const topGrowth=sortedByGrowth.filter(r=>r.delta>0).slice(0,3);
+  const topDrop=sortedByGrowth.filter(r=>r.delta<0).slice(-3).reverse();
+
+  const growthHtml=topGrowth.length?topGrowth.map(r=>`<li><strong>${esc(r.name)}</strong>: +${fmt(r.delta)} (${r.pctChange===null?'—':r.pctChange.toFixed(1).replace('.',',')+'%'})</li>`).join(''):'<li>Nenhuma tag com aumento.</li>';
+  const dropHtml=topDrop.length?topDrop.map(r=>`<li><strong>${esc(r.name)}</strong>: ${signed(r.delta)} (${r.pctChange===null?'—':r.pctChange.toFixed(1).replace('.',',')+'%'})</li>`).join(''):'<li>Nenhuma tag com redução.</li>';
+
+  summary.innerHTML=`
+    <div class="grid" style="gap:15px">
+      <div class="panel" style="background:var(--panel2);margin:0">
+        <h3 style="color:var(--green)">📈 Maiores aumentos</h3>
+        <ul style="margin:0;padding-left:20px;font-size:13px">${growthHtml}</ul>
+      </div>
+      <div class="panel" style="background:var(--panel2);margin:0">
+        <h3 style="color:#ff777d">📉 Maiores reduções</h3>
+        <ul style="margin:0;padding-left:20px;font-size:13px">${dropHtml}</ul>
+      </div>
+    </div>
+    <p class="hint" style="margin-top:12px">
+      <strong>Resumo:</strong> 
+      ${aumentaram} tag(s) com aumento, 
+      ${diminuíram} com redução e 
+      ${estáveis} estável(is).
+      Comparação entre <strong>${esc(base.name)}</strong> (base) e <strong>${esc(last.name)}</strong> (último).
+    </p>
+  `;
+}
+
+function renderReport(){
+ const chosen=periods.filter(p=>selectedIds.includes(p.id));
+ const base=periods.find(p=>p.id===baseId)||chosen[0];
+ if(chosen.length<2||!base||!chosen.includes(base)){
+  $('kpis').innerHTML='<div class="empty">Selecione pelo menos dois períodos e escolha um deles como base.</div>';
+  $('summaryText').innerHTML='';$('comparisonTable').innerHTML='<div class="empty">Selecione pelo menos dois períodos.</div>';$('totalBars').innerHTML='';$('shareTable').innerHTML='';$('analysis').innerHTML='<div class="empty">Selecione os períodos para gerar a análise.</div>';
+  $('tagBars').innerHTML='<div class="empty">Selecione pelo menos dois períodos.</div>';
+  $('tagPctBars').innerHTML='<div class="empty">Selecione pelo menos dois períodos.</div>';
+  $('tagAnalyticTable').innerHTML='<div class="empty">Selecione pelo menos dois períodos para gerar o analítico.</div>';
+  $('tagAnalyticSummary').innerHTML='';
+  return;
+ }
+ const baseTotal=total(base),totals=chosen.map(total),grand=totals.reduce((a,b)=>a+b,0),last=chosen[chosen.length-1],lastTotal=total(last),delta=lastTotal-baseTotal,change=pct(lastTotal,baseTotal);
+ $('kpis').innerHTML=[
+  ['Períodos comparados',chosen.length],
+  ['Total somado',fmt(grand)],
+  ['Média por período',fmt(Math.round(grand/chosen.length))],
+  ['Variação do último vs. base',change===null?'—':(change>0?'+':'')+change.toFixed(2).replace('.',',')+'%']
+ ].map(([l,v])=>`<div class="kpi"><div class="label">${l}</div><div class="value">${v}</div></div>`).join('');
+ $('summaryText').innerHTML=`<p>Período-base: <strong>${esc(base.name)}</strong> (${fmt(baseTotal)} registros). Último período selecionado: <strong>${esc(last.name)}</strong> (${fmt(lastTotal)} registros). Variação absoluta: <strong class="${delta>0?'positive':delta<0?'negative':'neutral'}">${signed(delta)}</strong>.</p>`;
+ const names=[...new Set(chosen.flatMap(p=>p.people.map(x=>x.name.trim()).filter(Boolean)))];
+ let html='<table><thead><tr><th>Colaborador</th>'+chosen.map(p=>`<th>${esc(p.name)}</th>`).join('')+'<th>Variação último/base</th></tr></thead><tbody>';
+ names.forEach(name=>{
+  const vals=chosen.map(p=>num(p.people.filter(x=>x.name.trim()===name).reduce((s,x)=>s+num(x.count),0)));
+  const b=base.people.filter(x=>x.name.trim()===name).reduce((s,x)=>s+num(x.count),0);
+  const l=last.people.filter(x=>x.name.trim()===name).reduce((s,x)=>s+num(x.count),0);
+  const d=l-b,pc=pct(l,b);
+  html+=`<tr><td>${esc(name)}</td>${vals.map(v=>`<td>${fmt(v)}</td>`).join('')}<td class="${d>0?'positive':d<0?'negative':'neutral'}">${signed(d)} ${pc===null?'(—)':`(${pc.toFixed(1).replace('.',',')}%)`}</td></tr>`;
+ });
+ html+=`<tr><th>Total geral</th>${chosen.map(p=>`<th>${fmt(total(p))}</th>`).join('')}<th class="${delta>0?'positive':delta<0?'negative':'neutral'}">${signed(delta)} ${change===null?'':`(${change.toFixed(1).replace('.',',')}%)`}</th></tr></tbody></table>`;
+ $('comparisonTable').innerHTML=html;
+ const max=Math.max(1,...chosen.map(total));
+ $('totalBars').innerHTML=chosen.map(p=>`<div class="bar-row"><span>${esc(p.name)}</span><div class="bar-track"><div class="bar" style="width:${total(p)/max*100}%"></div></div><strong>${fmt(total(p))}</strong></div>`).join('');
+ let sh='<table><thead><tr><th>Colaborador</th>'+chosen.map(p=>`<th>${esc(p.name)}</th>`).join('')+'</tr></thead><tbody>';
+ names.forEach(name=>{sh+=`<tr><td>${esc(name)}</td>`+chosen.map(p=>{const v=p.people.filter(x=>x.name.trim()===name).reduce((s,x)=>s+num(x.count),0);return `<td>${total(p)?(v/total(p)*100).toFixed(1).replace('.',',')+'%':'0,0%'}</td>`}).join('')+'</tr>';});
+ sh+='</tbody></table>';$('shareTable').innerHTML=sh;
+ const top=names.map(name=>({name,d:chosen[chosen.length-1].people.filter(x=>x.name.trim()===name).reduce((s,x)=>s+num(x.count),0)-base.people.filter(x=>x.name.trim()===name).reduce((s,x)=>s+num(x.count),0)})).sort((a,b)=>Math.abs(b.d)-Math.abs(a.d)).slice(0,3);
+ let bullets=top.map(x=>`<li><strong>${esc(x.name)}</strong>: ${x.d>0?'aumento':x.d<0?'redução':'sem alteração'} de ${fmt(Math.abs(x.d))} registros entre ${esc(base.name)} e ${esc(last.name)}.</li>`).join('');
+ $('analysis').innerHTML=`<p>Entre <strong>${esc(base.name)}</strong> e <strong>${esc(last.name)}</strong>, o volume total ${delta>0?'aumentou':delta<0?'diminuiu':'permaneceu igual'} em <strong>${fmt(Math.abs(delta))}</strong> registros${change===null?'':` (${Math.abs(change).toFixed(2).replace('.',',')}%)`}.</p><p>Variações individuais de maior magnitude:</p><ul>${bullets||'<li>Não há dados individuais suficientes.</li>'}</ul><p class="hint">A análise considera somente os números cadastrados. Verifique escalas, horários, tipo de atendimento e distribuição das demandas antes de tirar conclusões sobre desempenho.</p>`;
+
+ renderTagCharts();
+ renderTagAnalytic();
+}
+function refresh(){renderPeriods();renderSelectors();renderReport();save();}
+$('addPeriodBtn').onclick=()=>{
+  const hoje=new Date();
+  const monthValue=hoje.getFullYear()+'-'+String(hoje.getMonth()+1).padStart(2,'0');
+  const p={id:uid(),month:monthValue,name:monthToName(monthValue),start:'',end:'',people:[],tags:[]};
+  periods.push(p);selectedIds.push(p.id);baseId=p.id;refresh();
+};
+
+/* ===== INPUT (edição de campos de texto/número) ===== */
+$('periods').addEventListener('input',e=>{
+ const t=e.target;
+ if(t.dataset.field){
+   const p=periods.find(x=>x.id===t.dataset.id);
+   if(!p)return;
+   if(t.dataset.field==='month'){
+     p.month=t.value;
+     p.name=monthToName(t.value)||p.name;
+   }else{
+     p[t.dataset.field]=t.value;
+   }
+   renderSelectors();renderReport();save();
+ }
+ if(t.dataset.personfield){
+   const p=periods.find(x=>x.id===t.dataset.period),person=p?.people.find(x=>x.id===t.dataset.person);
+   if(person){person[t.dataset.personfield]=t.dataset.personfield==='count'?num(t.value):t.value;renderSelectors();renderReport();save();}
+ }
+ if(t.dataset.tagfield && t.tagName !== 'SELECT'){
+   const p=periods.find(x=>x.id===t.dataset.period),tag=p?.tags.find(x=>x.id===t.dataset.tag);
+   if(tag){tag[t.dataset.tagfield]=t.dataset.tagfield==='count'?num(t.value):t.value;renderSelectors();renderReport();save();}
+ }
+});
+
+/* ===== CHANGE (edição do select de tag) ===== */
+$('periods').addEventListener('change', e => {
+  const t = e.target;
+  if (t.dataset.tagfield === 'name' && t.tagName === 'SELECT') {
+    const p = periods.find(x => x.id === t.dataset.period);
+    const tag = p?.tags.find(x => x.id === t.dataset.tag);
+    if (!tag) return;
+    
+    if (t.value === 'OUTRO') {
+      const newName = prompt('Digite o nome do novo assunto:');
+      if (newName && newName.trim()) {
+        tag.name = newName.trim().toUpperCase();
+      } else {
+        t.value = tag.name;
+        return;
+      }
+    } else {
+      tag.name = t.value;
+    }
+    renderSelectors(); renderReport(); save();
+  }
+});
+
+/* ===== CLICK ===== */
+$('periods').addEventListener('click',e=>{
+  const delBtn=e.target.closest('[data-del]');
+  if(delBtn){
+    const id=delBtn.getAttribute('data-del');
+    if(confirm('Excluir este período e seus dados?')){
+      periods=periods.filter(p=>p.id!==id);
+      selectedIds=selectedIds.filter(x=>x!==id);
+      if(baseId===id)baseId=periods[0]?.id||'';
+      refresh();
+    }
+    return;
+  }
+  const addBtn=e.target.closest('[data-addperson]');
+  if(addBtn){
+    const id=addBtn.getAttribute('data-addperson');
+    const p=periods.find(x=>x.id===id);
+    if(p){p.people.push({id:uid(),name:'Novo colaborador',count:0});refresh();}
+    return;
+  }
+  const delPersonBtn=e.target.closest('[data-delperson]');
+  if(delPersonBtn){
+    const periodId=delPersonBtn.getAttribute('data-delperson');
+    const personId=delPersonBtn.getAttribute('data-person');
+    const p=periods.find(x=>x.id===periodId);
+    if(p){p.people=p.people.filter(x=>x.id!==personId);refresh();}
+    return;
+  }
+  const addTagBtn=e.target.closest('[data-addtag]');
+  if(addTagBtn){
+    const id=addTagBtn.getAttribute('data-addtag');
+    const p=periods.find(x=>x.id===id);
+    if(p){if(!p.tags)p.tags=[];p.tags.push({id:uid(),name:'',count:0});refresh();}
+    return;
+  }
+  const delTagBtn=e.target.closest('[data-deltag]');
+  if(delTagBtn){
+    const periodId=delTagBtn.getAttribute('data-deltag');
+    const tagId=delTagBtn.getAttribute('data-tag');
+    const p=periods.find(x=>x.id===periodId);
+    if(p){p.tags=p.tags.filter(x=>x.id!==tagId);refresh();}
+    return;
+  }
+});
+
+$('periodChecks').addEventListener('change',e=>{if(e.target.dataset.select){const id=e.target.dataset.select;selectedIds=e.target.checked?[...new Set([...selectedIds,id])]:selectedIds.filter(x=>x!==id);renderSelectors();renderReport();save();}});
+$('basePeriod').onchange=e=>{baseId=e.target.value;renderReport();save();};
+$('compareBtn').onclick=renderReport;
+$('selectAllBtn').onclick=()=>{selectedIds=periods.map(p=>p.id);renderSelectors();renderReport();save();};
+$('selectNoneBtn').onclick=()=>{selectedIds=[];renderSelectors();renderReport();save();};
+$('printBtn').onclick=()=>window.print();
+$('backupBtn').onclick=()=>{const data={app:'Painel de Relatórios Comparativos',version:1,exportedAt:new Date().toISOString(),periods,selectedIds,baseId};const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='backup-relatorios-comparativos-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(a.href);};
+$('importFile').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const d=JSON.parse(await file.text());if(!Array.isArray(d.periods))throw new Error('Arquivo não reconhecido');if(!confirm('Importar este backup substituirá os dados atuais. Deseja continuar?'))return;periods=d.periods;periods.forEach(normalizePeriod);selectedIds=Array.isArray(d.selectedIds)?d.selectedIds:periods.map(p=>p.id);baseId=d.baseId||periods[0]?.id||'';refresh();alert('Backup importado com sucesso.');}catch(err){alert('Não foi possível importar: '+err.message);}e.target.value='';};
+$('clearBtn').onclick=()=>{if(confirm('Tem certeza? Todos os períodos salvos neste navegador serão apagados. Exporte um backup antes, se precisar.')){periods=[];selectedIds=[];baseId='';localStorage.removeItem(STORAGE_KEY);refresh();}};
+
+/* ===== SELEÇÃO DE PERÍODO NOS GRÁFICOS DE TAG ===== */
+$('tagChartPeriodSelect').addEventListener('change',renderTagCharts);
+$('tagPctPeriodSelect').addEventListener('change',renderTagCharts);
+
+/* ===== ORDENAÇÃO DO ANALÍTICO DE TAGS ===== */
+$('tagAnalyticSort').addEventListener('change',renderTagAnalytic);
+
+load();refresh();
+</script>
+</body>
+</html>
